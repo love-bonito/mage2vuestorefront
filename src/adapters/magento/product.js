@@ -112,9 +112,14 @@ class ProductAdapter extends AbstractMagentoAdapter {
                 const childSkus = _.flattenDeep(products.map((p) => { return (p.configurable_children) ? p.configurable_children.map((cc) => { return cc.sku }) : null }))
                 skus = _.union(skus, childSkus)
               }
-              const query = '&searchCriteria[filter_groups][0][filters][0][field]=sku&' +
+              let query = '&searchCriteria[filter_groups][0][filters][0][field]=sku&' +
               'searchCriteria[filter_groups][0][filters][0][value]=' + encodeURIComponent(skus.join(',')) + '&' +
               'searchCriteria[filter_groups][0][filters][0][condition_type]=in';
+
+              if (this.config.magento.storeId) {
+                query += '&searchCriteria[filterGroups][0][filters][1][field]=store_id'+
+                  `&searchCriteria[filterGroups][0][filters][1][value]=${this.config.magento.storeId}`;
+              }
 
               this.api.products.renderList(query, this.config.magento.storeId, this.config.magento.currencyCode).then(renderedProducts => {
                 context.renderedProducts = renderedProducts
@@ -167,6 +172,11 @@ class ProductAdapter extends AbstractMagentoAdapter {
     if(this.config.product && JSON.parse(this.config.product.excludeDisabledProducts)) {
       searchCriteria += '&searchCriteria[filterGroups][0][filters][0][field]=status'+
                         '&searchCriteria[filterGroups][0][filters][0][value]=1';
+    }
+
+    if (this.config.magento.storeId) {
+      searchCriteria += '&searchCriteria[filterGroups][0][filters][0][field]=store_id'+
+        `&searchCriteria[filterGroups][0][filters][0][value]=${this.config.magento.storeId}`;
     }
 
     if(typeof context.stock_sync !== 'undefined')
