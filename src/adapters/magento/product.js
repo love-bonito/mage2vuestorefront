@@ -6,7 +6,8 @@ const CacheKeys = require('./cache_keys');
 const moment = require('moment')
 const _ = require('lodash')
 const request = require('request');
-const HTTP_RETRIES = 3
+const HTTP_RETRIES = 5
+const HTTP_RETRY_DELAY = 30000;
 let kue = require('kue');
 const _slugify = require('../../helpers/slugify')
 
@@ -144,13 +145,17 @@ class ProductAdapter extends AbstractMagentoAdapter {
                 resolve(result)
               })
             }).catch(err => {
-              retryHandler(context, err, reject)
+              setTimeout(() => {
+                retryHandler(context, err, reject)
+              }, HTTP_RETRY_DELAY)
             })
           })
         } else {
           return this.getProductSourceData(context).catch(err => {
+            setTimeout(() => {
               retryHandler(context, err, null)
-            })
+            }, HTTP_RETRY_DELAY)
+          })
         }
       } else {
         if (reject) {
